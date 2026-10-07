@@ -180,7 +180,7 @@ for label in labels:
             ax[0].legend(loc="upper center", bbox_to_anchor=(0.5, 1.15), ncol=3, fancybox=True, shadow=True)
             ax[1].legend(loc="upper center", bbox_to_anchor=(0.5, 1.15), ncol=3, fancybox=True, shadow=True)
             ax[1].set_xlabel("samples")
-            plt.savefig(f"reports/figures/{label.title()} ({participant}).png")
+            plt.savefig(f"../reports/figures/{label.title()} ({participant}).png")
 
             plt.show()
 
