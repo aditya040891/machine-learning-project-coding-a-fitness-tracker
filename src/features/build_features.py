@@ -26,17 +26,18 @@ plt.rcParams["lines.linewidth"] = 2
 # Dealing with missing values (imputation)
 # ---------------------------------------------------------------------------
 
-df.info()
+print(df.info())
 
-df.isna().sum()
+print(df.isna().sum())
 
-subset = df[df["set"] == 44]['gyr_y'].plot()
-
+ax = df[df["set"] == 44]['gyr_y'].plot()
+plt.show()
+plt.close(ax.figure)
 
 for col in predictor_columns:
     df[col] = df[col].interpolate()
 
-df.isna().sum()
+print(df.isna().sum())
 
 
 # -------------------------------------------------------------------------
@@ -44,13 +45,17 @@ df.isna().sum()
 # -------------------------------------------------------------------------
 
 
-df[df['set'] == 25]['acc_y'].plot()
+ax = df[df['set'] == 25]['acc_y'].plot()
+plt.show()
+plt.close(ax.figure)
 
-df[df['set'] == 50]['acc_y'].plot()
+ax = df[df['set'] == 50]['acc_y'].plot()
+plt.show()
+plt.close(ax.figure)
 
 duration = df[df['set'] == 25].index[-1] - df[df['set'] == 25].index[0]
 
-duration.seconds
+print(duration.seconds)
 
 for s in df['set'].unique():
     start = df[df['set'] == s].index[0]
@@ -58,12 +63,12 @@ for s in df['set'].unique():
     duration = end - start
     df.loc[(df['set'] == s), 'duration'] = duration.seconds
     
-df['duration'].unique()
+print(df['duration'].unique())
 
 duration_df = df.groupby('category')['duration'].mean()
 
-duration_df[0] / 5  # heavy reps
-duration_df[1] / 10 # medium reps         
+print(duration_df[0] / 5)  # heavy reps
+print(duration_df[1] / 10) # medium reps         
 
 
 # -------------------------------------------------------------------------
@@ -100,6 +105,7 @@ ax[1].legend(loc="upper center",
              fancybox=True,
              shadow=True)
 plt.show()
+plt.close(fig)
 
 
 for col in predictor_columns:
@@ -114,7 +120,7 @@ for col in predictor_columns:
     del df_lowpass[col + '_lowpass']
 
 
-df_lowpass
+print(df_lowpass)
 
 
 # ------------------------------------------------------------------------
@@ -132,6 +138,7 @@ plt.plot(range(1, len(predictor_columns) + 1), pc_values)
 plt.xlabel("Principal Component Number")
 plt.ylabel("explained variance")
 plt.show()
+plt.close()
 
 
 df_pca = PCA.apply_pca(df_pca, predictor_columns, 3)
@@ -139,8 +146,9 @@ df_pca = PCA.apply_pca(df_pca, predictor_columns, 3)
 
 subset = df_pca[df_pca["set"] == 35]
 
-subset[["pca_1", 'pca_2', 'pca_3']].plot()
-
+ax = subset[["pca_1", 'pca_2', 'pca_3']].plot()
+plt.show()
+plt.close(ax.figure)
 
 # ------------------------------------------------------------------------
 # Sum of squares attribution
@@ -158,4 +166,66 @@ df_squared['gyr_r'] = np.sqrt(gyr_r)
 
 subset = df_squared[df_squared["set"] == 14]
 
-subset[["acc_r", 'gyr_r']].plot(subplots=True)
+ax = subset[["acc_r", 'gyr_r']].plot(subplots=True)
+plt.show()
+plt.close()
+
+# ------------------------------------------------------------------------
+# Temporal Abstraction
+# ------------------------------------------------------------------------
+
+df_temporal = df_squared.copy()
+
+NumAbs = NumericalAbstraction()
+
+predictor_columns = predictor_columns + ["acc_r", "gyr_r"]
+
+
+ws = int(1000 / 200)
+
+for col in predictor_columns:
+    df_temporal = NumAbs.abstract_numerical(data_table = df_temporal, 
+                                            cols = [col], 
+                                            window_size = ws, 
+                                            aggregation_function = 'mean')
+    
+    df_temporal = NumAbs.abstract_numerical(data_table = df_temporal, 
+                                            cols = [col], 
+                                            window_size = ws, 
+                                            aggregation_function = 'std')
+
+
+print(df_temporal)
+
+print(df_temporal.columns)
+
+
+df_temporal_list = []
+
+for s in df_temporal["set"].unique():
+    subset = df_temporal[df_temporal["set"] == s].copy()
+    for col in predictor_columns:
+        subset = NumAbs.abstract_numerical(data_table = subset, 
+                                                cols = [col], 
+                                                window_size = ws, 
+                                                aggregation_function = 'mean')
+        
+        subset = NumAbs.abstract_numerical(data_table = subset, 
+                                                cols = [col], 
+                                                window_size = ws, 
+                                                aggregation_function = 'std')
+    
+    df_temporal_list.append(subset)
+    
+
+df_temporal = pd.concat(df_temporal_list)
+
+print(df_temporal.isna().sum())
+
+ax = subset[["acc_y", "acc_y_temp_mean_ws_5", "acc_y_temp_std_ws_5"]].plot()
+plt.show()
+plt.close(ax.figure)
+
+ax = subset[["gyr_y", "gyr_y_temp_mean_ws_5", "gyr_y_temp_std_ws_5"]].plot()
+plt.show()
+plt.close(ax.figure)
