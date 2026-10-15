@@ -3,7 +3,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from DataTransformation import LowPassFilter, PrincipalComponentAnalysis
 from TemporalAbstraction import NumericalAbstraction
+from FrequencyAbstraction import FourierTransformation
 import warnings
+
 warnings.simplefilter(action='ignore')
 pd.set_option('display.max_columns', None)
 
@@ -229,3 +231,80 @@ plt.close(ax.figure)
 ax = subset[["gyr_y", "gyr_y_temp_mean_ws_5", "gyr_y_temp_std_ws_5"]].plot()
 plt.show()
 plt.close(ax.figure)
+<<<<<<< HEAD
+=======
+
+
+# ------------------------------------------------------------------------
+# Frequency Abstraction
+# ------------------------------------------------------------------------
+
+df_freq = df_temporal.copy().reset_index()
+
+
+FreqAbs = FourierTransformation()
+
+fs = int(1000 / 20)
+
+ws = int(2800 / 200)
+
+
+df_freq = FreqAbs.abstract_frequency(data_table = df_freq, 
+                                     cols = ["acc_y"], 
+                                     window_size = ws, 
+                                     sampling_rate = fs)
+
+
+print(df_freq.columns)
+
+subset= df_freq[df_freq['set'] == 15]
+ax = subset[['acc_y']].plot()
+plt.show()
+plt.close(ax.figure)
+
+ax = subset[
+        ['acc_y_max_freq', 'acc_y_freq_weighted', 'acc_y_pse',
+        'acc_y_freq_0.0_Hz_ws_14', 'acc_y_freq_3.571_Hz_ws_14',
+        'acc_y_freq_7.143_Hz_ws_14', 'acc_y_freq_10.714_Hz_ws_14',
+        'acc_y_freq_14.286_Hz_ws_14', 'acc_y_freq_17.857_Hz_ws_14',
+        'acc_y_freq_21.429_Hz_ws_14', 'acc_y_freq_25.0_Hz_ws_14']
+    ].plot()
+plt.show()
+plt.close(ax.figure)
+
+
+df_freq_list = []
+
+for s in df_freq["set"].unique():
+    print(f"Applying fourier transformation to set {s}") 
+    subset = df_freq[df_freq["set"] == s].reset_index(drop=True).copy()
+    subset = FreqAbs.abstract_frequency(data_table = subset, 
+                                             cols = predictor_columns, 
+                                             window_size = ws, 
+                                             sampling_rate = fs)
+    df_freq_list.append(subset)
+    
+
+df_freq = pd.concat(df_freq_list) 
+
+df_freq.to_csv('df_freq.csv')
+
+# -----------------------------------------------------------------------
+# Dealing with Overlapping windows
+# -----------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+>>>>>>> 0b9cc6f (added frequency abstraction features into the main dataset)
